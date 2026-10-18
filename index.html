@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mis Finanzas</title>
+<meta name="theme-color" content="#1F4E78">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>Mis Finanzas</h1>
+  <button id="btn-ajustes" class="icon-btn" title="Ajustes">&#9881;</button>
+</header>
+
+<main id="app">
+
+  <!-- Pantalla de configuracion inicial -->
+  <section id="view-setup" class="view">
+    <div class="card">
+      <h2>Conecta tu Hoja de Google</h2>
+      <p class="muted">Pega aqui la URL de tu aplicacion web y la clave que generaste en Apps Script. Lo encuentras en el tutorial de instalacion.</p>
+      <label>URL de la aplicacion web</label>
+      <input id="input-url" type="url" placeholder="https://script.google.com/macros/s/..../exec">
+      <label>Clave de acceso</label>
+      <input id="input-key" type="text" placeholder="Clave generada por inicializar()">
+      <button id="btn-guardar-setup" class="btn-primary">Conectar</button>
+      <p id="setup-error" class="error"></p>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <section id="view-dashboard" class="view">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <span class="stat-label">Ingresos del mes</span>
+        <span id="stat-ingresos" class="stat-value">$0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Gastos del mes</span>
+        <span id="stat-gastos" class="stat-value">$0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Disponible real</span>
+        <span id="stat-disponible" class="stat-value">$0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Reserva impuestos</span>
+        <span id="stat-reserva" class="stat-value">$0</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Ingresos vs Gastos (<span id="anio-actual"></span>)</h3>
+      <div id="chart" class="chart"></div>
+    </div>
+
+    <div class="card">
+      <div class="row-between">
+        <h3>Fondo de emergencia</h3>
+        <span id="fondo-pct">0%</span>
+      </div>
+      <div class="progress-bar"><div id="fondo-fill" class="progress-fill"></div></div>
+    </div>
+
+    <div class="card">
+      <h3>Facturas pendientes de cobro</h3>
+      <span id="stat-pendientes" class="stat-value">$0</span>
+    </div>
+  </section>
+
+  <!-- Ingresos -->
+  <section id="view-ingresos" class="view">
+    <div class="card">
+      <h2>Nuevo ingreso</h2>
+      <form id="form-ingreso">
+        <label>Fecha</label>
+        <input name="Fecha" type="date" required>
+        <label>Cliente</label>
+        <input name="Cliente" type="text" required>
+        <label>Descripcion</label>
+        <input name="Descripcion" type="text">
+        <label>Categoria</label>
+        <input name="Categoria" type="text">
+        <label>Monto</label>
+        <input name="Monto" type="number" step="0.01" required>
+        <label>Estado</label>
+        <select name="Estado">
+          <option>Pagado</option>
+          <option>Pendiente</option>
+        </select>
+        <button type="submit" class="btn-primary">Guardar ingreso</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Historial</h2>
+      <div id="lista-ingresos" class="list"></div>
+    </div>
+  </section>
+
+  <!-- Gastos -->
+  <section id="view-gastos" class="view">
+    <div class="card">
+      <h2>Nuevo gasto</h2>
+      <form id="form-gasto">
+        <label>Fecha</label>
+        <input name="Fecha" type="date" required>
+        <label>Descripcion</label>
+        <input name="Descripcion" type="text" required>
+        <label>Categoria</label>
+        <input name="Categoria" type="text">
+        <label>Monto</label>
+        <input name="Monto" type="number" step="0.01" required>
+        <label>Deducible</label>
+        <select name="Deducible">
+          <option>Si</option>
+          <option>No</option>
+        </select>
+        <button type="submit" class="btn-primary">Guardar gasto</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Historial</h2>
+      <div id="lista-gastos" class="list"></div>
+    </div>
+  </section>
+
+  <!-- Ajustes -->
+  <section id="view-ajustes" class="view">
+    <div class="card">
+      <h2>Ajustes</h2>
+      <label>Tasa de reserva de impuestos</label>
+      <input id="ajuste-tasa" type="number" step="0.01" min="0" max="1">
+      <label>Meta de fondo de emergencia</label>
+      <input id="ajuste-meta" type="number" step="0.01" min="0">
+      <label>Ahorrado actualmente</label>
+      <input id="ajuste-ahorrado" type="number" step="0.01" min="0">
+      <button id="btn-guardar-ajustes" class="btn-primary">Guardar ajustes</button>
+      <p id="ajustes-msg" class="muted"></p>
+    </div>
+    <div class="card">
+      <h2>Conexion</h2>
+      <p class="muted">Cambia la Hoja de Google conectada a esta app.</p>
+      <button id="btn-reconectar" class="btn-secondary">Reconectar / cambiar hoja</button>
+    </div>
+  </section>
+
+</main>
+
+<footer class="brand-footer">Mis Finanzas &middot; creado por <a href="By NormalGero" target="_blank" rel="noopener">NormalGero</a></footer>
+
+<nav class="bottom-nav">
+  <button data-view="dashboard" class="nav-btn active">Resumen</button>
+  <button data-view="ingresos" class="nav-btn">Ingresos</button>
+  <button data-view="gastos" class="nav-btn">Gastos</button>
+  <button data-view="ajustes" class="nav-btn">Ajustes</button>
+</nav>
+
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
