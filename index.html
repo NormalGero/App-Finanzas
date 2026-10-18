@@ -10,6 +10,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="styles.css">
+<script>
+(function () {
+  try {
+    var t = localStorage.getItem('mf_theme_v1');
+    if (t === 'claro') document.documentElement.setAttribute('data-theme', 'light');
+    else if (t === 'oscuro') document.documentElement.setAttribute('data-theme', 'dark');
+  } catch (e) {}
+})();
+</script>
 </head>
 <body>
 
@@ -96,6 +105,10 @@
         </select>
         <button type="submit" class="btn-primary">Guardar ingreso</button>
       </form>
+      <div id="fondo-sugerencia" class="suggestion-box" style="display:none;">
+        <p id="fondo-sugerencia-texto"></p>
+        <button id="btn-marcar-ahorrado" class="btn-secondary">Ya lo aparté</button>
+      </div>
     </div>
     <div class="card">
       <h2>Historial</h2>
@@ -133,6 +146,15 @@
   <!-- Ajustes -->
   <section id="view-ajustes" class="view">
     <div class="card">
+      <h2>Apariencia</h2>
+      <label>Tema</label>
+      <div class="theme-toggle" id="theme-toggle">
+        <button type="button" data-theme-opt="sistema" class="theme-btn">Sistema</button>
+        <button type="button" data-theme-opt="claro" class="theme-btn">Claro</button>
+        <button type="button" data-theme-opt="oscuro" class="theme-btn">Oscuro</button>
+      </div>
+    </div>
+    <div class="card">
       <h2>Ajustes</h2>
       <label>Tasa de reserva de impuestos</label>
       <input id="ajuste-tasa" type="number" step="0.01" min="0" max="1">
@@ -140,6 +162,8 @@
       <input id="ajuste-meta" type="number" step="0.01" min="0">
       <label>Ahorrado actualmente</label>
       <input id="ajuste-ahorrado" type="number" step="0.01" min="0">
+      <label>Porcentaje sugerido de ahorro por ingreso</label>
+      <input id="ajuste-tasa-ahorro" type="number" step="0.01" min="0" max="1">
       <button id="btn-guardar-ajustes" class="btn-primary">Guardar ajustes</button>
       <p id="ajustes-msg" class="muted"></p>
     </div>
