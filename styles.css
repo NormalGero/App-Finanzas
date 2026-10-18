@@ -216,14 +216,73 @@ input:focus, select:focus{outline:2px solid var(--primary-light);}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 @media (prefers-color-scheme: dark){
-  :root{
+  :root:not([data-theme="light"]){
     --bg:#121212;
     --card:#1e1e1e;
     --text:#f0f0f0;
     --muted:#9aa3ad;
     --border:#333740;
   }
-  input, select{background:#2a2a2a;color:var(--text);}
-  .nav-btn{color:var(--muted);}
-  .bottom-nav{background:#1a1a1a;}
+  :root:not([data-theme="light"]) input,
+  :root:not([data-theme="light"]) select{background:#2a2a2a;color:var(--text);}
+  :root:not([data-theme="light"]) .nav-btn{color:var(--muted);}
+  :root:not([data-theme="light"]) .bottom-nav{background:#1a1a1a;}
+}
+
+:root[data-theme="dark"]{
+  --bg:#121212;
+  --card:#1e1e1e;
+  --text:#f0f0f0;
+  --muted:#9aa3ad;
+  --border:#333740;
+}
+:root[data-theme="dark"] input,
+:root[data-theme="dark"] select{background:#2a2a2a;color:var(--text);}
+:root[data-theme="dark"] .nav-btn{color:var(--muted);}
+:root[data-theme="dark"] .bottom-nav{background:#1a1a1a;}
+
+.theme-toggle{display:flex;gap:8px;margin-top:6px;}
+.theme-btn{
+  flex:1;
+  padding:10px 4px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--card);
+  color:var(--muted);
+  font-size:0.85rem;
+  cursor:pointer;
+}
+.theme-btn.active{
+  border-color:var(--primary);
+  color:var(--primary);
+  font-weight:bold;
+  background:color-mix(in srgb, var(--primary) 10%, var(--card));
+}
+
+.li-info{display:flex;flex-direction:column;gap:2px;}
+.li-actions{display:flex;align-items:center;gap:8px;}
+.li-estado{
+  width:auto;
+  padding:4px 8px;
+  font-size:0.72rem;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:#fff3cd;
+  color:#7a5b00;
+}
+.li-estado[data-value="Pagado"]{background:#d9f2e3;color:var(--good);}
+.li-estado[data-value="Pendiente"]{background:#fff3cd;color:#7a5b00;}
+
+.suggestion-box{
+  margin-top:14px;
+  padding:12px 14px;
+  border-radius:10px;
+  background:#eaf2fb;
+  border:1px solid #bcd7f0;
+}
+.suggestion-box p{margin:0 0 8px;font-size:0.85rem;color:var(--text);}
+.suggestion-box .btn-secondary{margin-top:0;}
+:root[data-theme="dark"] .suggestion-box{background:#1c2e3f;border-color:#2c4c68;}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .suggestion-box{background:#1c2e3f;border-color:#2c4c68;}
 }

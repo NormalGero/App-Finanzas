@@ -1,4 +1,4 @@
-var CACHE_NAME = 'mis-finanzas-v1';
+var CACHE_NAME = 'mis-finanzas-v2';
 var ASSETS = [
   './index.html',
   './styles.css',
@@ -26,23 +26,23 @@ self.addEventListener('activate', function (event) {
   self.clients.claim();
 });
 
+// Estrategia: red primero (para que las actualizaciones se vean de inmediato),
+// con la cache como respaldo si no hay conexion. Solo para el propio sitio;
+// las llamadas a la API de Apps Script nunca se tocan aqui.
 self.addEventListener('fetch', function (event) {
   var req = event.request;
   if (req.method !== 'GET') return;
-
-  // Nunca cachear llamadas a la API de Apps Script: siempre red.
-  if (req.url.indexOf('script.google.com') !== -1 || req.url.indexOf('script.googleusercontent.com') !== -1) {
-    return;
-  }
+  if (req.url.indexOf(self.location.origin) !== 0) return;
 
   event.respondWith(
-    caches.match(req).then(function (cached) {
-      if (cached) return cached;
-      return fetch(req).then(function (res) {
-        var copy = res.clone();
-        caches.open(CACHE_NAME).then(function (cache) { cache.put(req, copy); });
-        return res;
-      }).catch(function () { return cached; });
+    fetch(req).then(function (res) {
+      var copy = res.clone();
+      caches.open(CACHE_NAME).then(function (cache) { cache.put(req, copy); });
+      return res;
+    }).catch(function () {
+      return caches.match(req).then(function (cached) {
+        return cached || caches.match('./index.html');
+      });
     })
   );
 });

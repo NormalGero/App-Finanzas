@@ -31,6 +31,33 @@
     setTimeout(function () { t.classList.remove('show'); }, 2600);
   }
 
+  // ---------- Tema ----------
+  var THEME_KEY = 'mf_theme_v1';
+
+  function applyTheme(valor) {
+    if (valor === 'claro') document.documentElement.setAttribute('data-theme', 'light');
+    else if (valor === 'oscuro') document.documentElement.setAttribute('data-theme', 'dark');
+    else document.documentElement.removeAttribute('data-theme');
+
+    document.querySelectorAll('.theme-btn').forEach(function (btn) {
+      btn.classList.toggle('active', btn.dataset.themeOpt === valor);
+    });
+  }
+
+  function getSavedTheme() {
+    try { return localStorage.getItem(THEME_KEY) || 'sistema'; } catch (e) { return 'sistema'; }
+  }
+
+  document.querySelectorAll('.theme-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var valor = btn.dataset.themeOpt;
+      try { localStorage.setItem(THEME_KEY, valor); } catch (e) {}
+      applyTheme(valor);
+    });
+  });
+
+  applyTheme(getSavedTheme());
+
   function apiGet(action, params) {
     if (!cfg) return Promise.reject(new Error('sin_configurar'));
     params = params || {};
@@ -69,7 +96,7 @@
     });
     document.querySelector('.bottom-nav').style.display = (name === 'setup') ? 'none' : 'flex';
     if (name === 'dashboard') loadDashboard();
-    if (name === 'ingresos') loadLista('Ingresos');
+    if (name === 'ingresos') { loadLista('Ingresos'); ocultarSugerenciaFondo(); }
     if (name === 'gastos') loadLista('Gastos');
     if (name === 'ajustes') loadAjustes();
   }
@@ -169,16 +196,38 @@
         item.className = 'list-item';
         var main = sheet === 'Ingresos' ? r.Cliente : r.Descripcion;
         var sub = sheet === 'Ingresos'
-          ? (r.Fecha + ' - ' + (r.Categoria || '') + ' - ' + (r.Estado || ''))
+          ? (r.Fecha + ' - ' + (r.Categoria || ''))
           : (r.Fecha + ' - ' + (r.Categoria || '') + ' - Deducible: ' + (r.Deducible || ''));
+        var estadoHtml = '';
+        if (sheet === 'Ingresos') {
+          var est = r.Estado || 'Pagado';
+          estadoHtml =
+            '<select class="li-estado" data-value="' + normalizeEstado(est) + '" data-row="' + r.rowIndex + '">' +
+            '<option value="Pagado"' + (est === 'Pagado' ? ' selected' : '') + '>Pagado</option>' +
+            '<option value="Pendiente"' + (est === 'Pendiente' ? ' selected' : '') + '>Pendiente</option>' +
+            '</select>';
+        }
         item.innerHTML =
-          '<div><div class="li-main">' + escapeHtml(main || '') + '</div>' +
+          '<div class="li-info"><div class="li-main">' + escapeHtml(main || '') + '</div>' +
           '<div class="li-sub">' + escapeHtml(sub) + '</div></div>' +
-          '<div style="display:flex;align-items:center;gap:6px;">' +
+          '<div class="li-actions">' +
+          estadoHtml +
           '<span class="li-amount">' + money(r.Monto) + '</span>' +
           '<button class="li-delete" data-row="' + r.rowIndex + '" data-sheet="' + sheet + '">&times;</button>' +
           '</div>';
         cont.appendChild(item);
+      });
+      cont.querySelectorAll('.li-estado').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+          var nuevoValor = sel.value;
+          var rowIndex = Number(sel.dataset.row);
+          apiPost({ action: 'update', sheet: 'Ingresos', rowIndex: rowIndex, data: { Estado: nuevoValor } })
+            .then(function () {
+              sel.dataset.value = nuevoValor;
+              showToast('Estado actualizado');
+            })
+            .catch(function (e) { showToast('Error: ' + e.message); });
+        });
       });
       cont.querySelectorAll('.li-delete').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -190,6 +239,8 @@
       });
     }).catch(function (e) { showToast('Error al cargar: ' + e.message); });
   }
+
+  function normalizeEstado(v) { return v === 'Pendiente' ? 'Pendiente' : 'Pagado'; }
 
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -206,8 +257,45 @@
       e.target.reset();
       loadLista('Ingresos');
       showToast('Ingreso guardado');
+      mostrarSugerenciaFondo(Number(data.Monto) || 0);
     }).catch(function (err) { showToast('Error: ' + err.message); });
   });
+
+  // ---------- Sugerencia de fondo de emergencia ----------
+  function ocultarSugerenciaFondo() {
+    document.getElementById('fondo-sugerencia').style.display = 'none';
+  }
+
+  function mostrarSugerenciaFondo(montoIngreso) {
+    apiGet('config').then(function (c) {
+      var meta = Number(c.metaFondoEmergencia) || 0;
+      var ahorrado = Number(c.ahorradoFondoEmergencia) || 0;
+      var tasa = c.tasaAhorroFondo === undefined ? 0.10 : Number(c.tasaAhorroFondo);
+
+      if (meta <= 0 || ahorrado >= meta || montoIngreso <= 0) {
+        ocultarSugerenciaFondo();
+        return;
+      }
+
+      var faltante = meta - ahorrado;
+      var sugerido = Math.min(montoIngreso * tasa, faltante);
+      if (sugerido <= 0) { ocultarSugerenciaFondo(); return; }
+
+      var box = document.getElementById('fondo-sugerencia');
+      var texto = document.getElementById('fondo-sugerencia-texto');
+      texto.textContent = 'Sugerencia: aparta ' + money(sugerido) + ' de este ingreso para tu fondo de emergencia. Te faltan ' + money(faltante) + ' para tu meta.';
+      box.style.display = 'block';
+
+      var btn = document.getElementById('btn-marcar-ahorrado');
+      btn.onclick = function () {
+        var nuevoAhorrado = Math.min(meta, ahorrado + sugerido);
+        apiPost({ action: 'setConfig', data: { ahorradoFondoEmergencia: nuevoAhorrado } }).then(function () {
+          showToast('Fondo de emergencia actualizado');
+          ocultarSugerenciaFondo();
+        }).catch(function (e) { showToast('Error: ' + e.message); });
+      };
+    }).catch(function () { ocultarSugerenciaFondo(); });
+  }
 
   document.getElementById('form-gasto').addEventListener('submit', function (e) {
     e.preventDefault();
@@ -227,6 +315,7 @@
       document.getElementById('ajuste-tasa').value = c.tasaImpuesto;
       document.getElementById('ajuste-meta').value = c.metaFondoEmergencia;
       document.getElementById('ajuste-ahorrado').value = c.ahorradoFondoEmergencia;
+      document.getElementById('ajuste-tasa-ahorro').value = c.tasaAhorroFondo === undefined ? 0.10 : c.tasaAhorroFondo;
     }).catch(function (e) { showToast('Error al cargar ajustes: ' + e.message); });
   }
 
@@ -234,7 +323,8 @@
     var data = {
       tasaImpuesto: Number(document.getElementById('ajuste-tasa').value) || 0,
       metaFondoEmergencia: Number(document.getElementById('ajuste-meta').value) || 0,
-      ahorradoFondoEmergencia: Number(document.getElementById('ajuste-ahorrado').value) || 0
+      ahorradoFondoEmergencia: Number(document.getElementById('ajuste-ahorrado').value) || 0,
+      tasaAhorroFondo: Number(document.getElementById('ajuste-tasa-ahorro').value) || 0
     };
     apiPost({ action: 'setConfig', data: data }).then(function () {
       document.getElementById('ajustes-msg').textContent = 'Ajustes guardados.';
