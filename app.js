@@ -171,6 +171,7 @@
       document.getElementById('stat-gastos').textContent = money(mesActual.gastos);
       document.getElementById('stat-disponible').textContent = money(mesActual.disponible);
       document.getElementById('stat-reserva').textContent = money(mesActual.reserva);
+      document.getElementById('stat-total-disponible-reserva').textContent = money(mesActual.disponible + mesActual.reserva);
       document.getElementById('stat-pendientes').textContent = money(data.facturasPendientes);
       document.getElementById('anio-actual').textContent = data.anio;
       renderChart(data.meses);
